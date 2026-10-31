@@ -1,0 +1,387 @@
+<div class="register-page container">
+  <div class="register-card card fade-in">
+    @if (!isOtpStep) {
+      <div class="register-header text-center">
+        <h2 class="title">Create Your Account</h2>
+        <p class="subtitle">Join Deals & Coupons Finder to save, earn, or grow your business</p>
+
+      <!-- Account Type Switcher Tabs -->
+      <div class="role-tabs">
+        <button
+          type="button"
+          class="role-tab"
+          [class.active]="accountType === 'CUSTOMER'"
+          (click)="setAccountType('CUSTOMER')"
+        >
+          <span>👤</span> Shopper / Customer
+        </button>
+        <button
+          type="button"
+          class="role-tab"
+          [class.active]="accountType === 'MERCHANT'"
+          (click)="setAccountType('MERCHANT')"
+        >
+          <span>🏪</span> Business / Merchant
+        </button>
+      </div>
+    </div>
+
+    @if (errorMessage) {
+      <div class="error-banner fade-in">
+        <span>⚠️</span> {{ errorMessage }}
+      </div>
+    }
+
+    <!-- CUSTOMER REGISTRATION FORM -->
+    @if (accountType === 'CUSTOMER') {
+      <form [formGroup]="customerForm" (ngSubmit)="onCustomerSubmit()" class="register-form fade-in">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="cust-name">Full Name *</label>
+            <input
+              id="cust-name"
+              type="text"
+              class="form-control"
+              [class.is-invalid]="cf['name'].touched && cf['name'].invalid"
+              formControlName="name"
+              placeholder="e.g. Alice Smith"
+            />
+            @if (cf['name'].touched && cf['name'].invalid) {
+              <span class="form-text-error">Name is required.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cust-email">Email Address *</label>
+            <input
+              id="cust-email"
+              type="email"
+              class="form-control"
+              [class.is-invalid]="cf['email'].touched && cf['email'].invalid"
+              formControlName="email"
+              placeholder="alice@example.com"
+            />
+            @if (cf['email'].touched && cf['email'].invalid) {
+              <span class="form-text-error">Valid email is required.</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="cust-phone">Phone Number *</label>
+            <input
+              id="cust-phone"
+              type="tel"
+              class="form-control"
+              [class.is-invalid]="cf['phone'].touched && cf['phone'].invalid"
+              formControlName="phone"
+              placeholder="9876543210"
+            />
+            @if (cf['phone'].touched && cf['phone'].invalid) {
+              <span class="form-text-error">Phone is required.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cust-password">Password (min 6 characters) *</label>
+            <div class="password-input-wrapper">
+              <input
+                id="cust-password"
+                [type]="showCustomerPassword ? 'text' : 'password'"
+                class="form-control pad-right-icon"
+                [class.is-invalid]="cf['password'].touched && cf['password'].invalid"
+                formControlName="password"
+                placeholder="At least 6 characters"
+              />
+              <button
+                type="button"
+                class="btn-toggle-eye"
+                (click)="toggleCustomerPassword()"
+                [title]="showCustomerPassword ? 'Hide password' : 'Show password'"
+                [attr.aria-label]="showCustomerPassword ? 'Hide password' : 'Show password'"
+                tabindex="-1"
+              >
+                {{ showCustomerPassword ? '🙈' : '👁' }}
+              </button>
+            </div>
+            @if (cf['password'].touched && cf['password'].invalid) {
+              <span class="form-text-error">Password must be at least 6 characters.</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="cust-preferences">
+            Shopping Preferences (Optional)
+          </label>
+          <input
+            id="cust-preferences"
+            type="text"
+            class="form-control"
+            formControlName="preferences"
+            placeholder="e.g. Food & Dining, Electronics, Fashion"
+          />
+          <span class="hint-text">We'll personalize deals discovery based on your preferences.</span>
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-primary btn-lg"
+          style="width: 100%; margin-top: 1rem;"
+          [disabled]="customerForm.invalid || isLoading"
+        >
+          @if (isLoading) {
+            <span>Registering Customer Account...</span>
+          } @else {
+            <span>Create Customer Account & Earn Rewards →</span>
+          }
+        </button>
+      </form>
+    }
+
+    <!-- MERCHANT REGISTRATION FORM -->
+    @if (accountType === 'MERCHANT') {
+      <form [formGroup]="merchantForm" (ngSubmit)="onMerchantSubmit()" class="register-form fade-in">
+        <div class="merchant-notice">
+          <span>ℹ️</span>
+          <span>
+            Merchant applications undergo Administrator review (Status: <strong>PENDING</strong>). Once approved, you can purchase subscriptions and publish deals.
+          </span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="merch-business">Business / Store Name *</label>
+            <input
+              id="merch-business"
+              type="text"
+              class="form-control"
+              [class.is-invalid]="mf['businessName'].touched && mf['businessName'].invalid"
+              formControlName="businessName"
+              placeholder="e.g. Pizza Planet Bistro"
+            />
+            @if (mf['businessName'].touched && mf['businessName'].invalid) {
+              <span class="form-text-error">Business name is required.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="merch-owner">Owner Name *</label>
+            <input
+              id="merch-owner"
+              type="text"
+              class="form-control"
+              [class.is-invalid]="mf['ownerName'].touched && mf['ownerName'].invalid"
+              formControlName="ownerName"
+              placeholder="e.g. John Doe"
+            />
+            @if (mf['ownerName'].touched && mf['ownerName'].invalid) {
+              <span class="form-text-error">Owner name is required.</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="merch-email">Business Email *</label>
+            <input
+              id="merch-email"
+              type="email"
+              class="form-control"
+              [class.is-invalid]="mf['email'].touched && mf['email'].invalid"
+              formControlName="email"
+              placeholder="contact@pizzaplanet.com"
+            />
+            @if (mf['email'].touched && mf['email'].invalid) {
+              <span class="form-text-error">Valid email is required.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="merch-phone">Phone Number *</label>
+            <input
+              id="merch-phone"
+              type="tel"
+              class="form-control"
+              [class.is-invalid]="mf['phone'].touched && mf['phone'].invalid"
+              formControlName="phone"
+              placeholder="9876543210"
+            />
+            @if (mf['phone'].touched && mf['phone'].invalid) {
+              <span class="form-text-error">Phone is required.</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="merch-password">Password (min 6 characters) *</label>
+            <div class="password-input-wrapper">
+              <input
+                id="merch-password"
+                [type]="showMerchantPassword ? 'text' : 'password'"
+                class="form-control pad-right-icon"
+                [class.is-invalid]="mf['password'].touched && mf['password'].invalid"
+                formControlName="password"
+                placeholder="At least 6 characters"
+              />
+              <button
+                type="button"
+                class="btn-toggle-eye"
+                (click)="toggleMerchantPassword()"
+                [title]="showMerchantPassword ? 'Hide password' : 'Show password'"
+                [attr.aria-label]="showMerchantPassword ? 'Hide password' : 'Show password'"
+                tabindex="-1"
+              >
+                {{ showMerchantPassword ? '🙈' : '👁' }}
+              </button>
+            </div>
+            @if (mf['password'].touched && mf['password'].invalid) {
+              <span class="form-text-error">Password must be at least 6 characters.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="merch-category">Business Category *</label>
+            <select
+              id="merch-category"
+              class="form-control"
+              formControlName="category"
+              [class.is-invalid]="mf['category'].touched && mf['category'].invalid"
+            >
+              <option value="">Select Category...</option>
+              <option value="Food & Dining">Food & Dining</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Fashion">Fashion & Apparel</option>
+              <option value="Travel">Travel & Hotels</option>
+              <option value="Beauty & Health">Beauty & Health</option>
+              <option value="Grocery">Grocery & Supermarket</option>
+              <option value="Entertainment">Entertainment & Events</option>
+            </select>
+            @if (mf['category'].touched && mf['category'].invalid) {
+              <span class="form-text-error">Category is required.</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="merch-address">Business Address</label>
+          <input
+            id="merch-address"
+            type="text"
+            class="form-control"
+            formControlName="address"
+            placeholder="101 Food Avenue, Silicon Valley"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="merch-description">Store Description</label>
+          <textarea
+            id="merch-description"
+            rows="2"
+            class="form-control"
+            formControlName="description"
+            placeholder="Brief summary of your products, specialties, and deals"
+          ></textarea>
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-accent btn-lg"
+          style="width: 100%; margin-top: 1rem;"
+          [disabled]="merchantForm.invalid || isLoading"
+        >
+          @if (isLoading) {
+            <span>Submitting Merchant Application...</span>
+          } @else {
+            <span>Submit Merchant Application for Approval →</span>
+          }
+        </button>
+      </form>
+    }
+
+    <div class="register-footer text-center">
+      <p>
+        Already have an account?
+        <a routerLink="/login" class="login-link">Sign In</a>
+      </p>
+    </div>
+    } @else {
+      <!-- OTP VERIFICATION SCREEN -->
+      <div class="otp-verification-section fade-in">
+        <div class="otp-icon-wrap">
+          <span class="otp-icon">✉️</span>
+        </div>
+
+        <h2 class="title text-center" style="margin-bottom: 0.5rem;">Verify Your Email Address</h2>
+        <p class="subtitle text-center" style="margin-bottom: 1.5rem;">
+          A 6-digit confirmation code was sent to<br />
+          <strong class="otp-email-highlight">{{ pendingEmail }}</strong>
+        </p>
+
+        <div class="otp-info-card">
+          <span>📬</span>
+          <span>Please check your email inbox (and spam/promotions folder) for your verification code.</span>
+        </div>
+
+        @if (otpError) {
+          <div class="error-banner fade-in" style="margin-bottom: 1.25rem;">
+            <span>⚠️</span> {{ otpError }}
+          </div>
+        }
+
+        <div class="otp-input-container">
+          <label class="form-label text-center" for="otp-field">Enter 6-Digit Verification Code</label>
+          <input
+            id="otp-field"
+            type="text"
+            maxlength="6"
+            class="form-control otp-input-box"
+            placeholder="000000"
+            [(ngModel)]="otpValue"
+            (keyup.enter)="verifyAndRegister()"
+            autocomplete="one-time-code"
+          />
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-primary btn-lg btn-verify-otp"
+          (click)="verifyAndRegister()"
+          [disabled]="isVerifyingOtp || !otpValue || otpValue.length < 6"
+        >
+          @if (isVerifyingOtp) {
+            <span class="btn-spinner">⌛</span>
+            <span>Verifying & Setting Up Account...</span>
+          } @else {
+            <span>Verify & Complete Registration →</span>
+          }
+        </button>
+
+        <div class="otp-resend-row">
+          <span>Didn't receive the code?</span>
+          @if (resendCountdown > 0) {
+            <span class="resend-countdown">Resend in {{ resendCountdown }}s</span>
+          } @else {
+            <button
+              type="button"
+              class="btn-resend-link"
+              (click)="resendOtp()"
+              [disabled]="isResendingOtp"
+            >
+              {{ isResendingOtp ? 'Sending...' : 'Resend Code' }}
+            </button>
+          }
+        </div>
+
+        <div class="otp-back-row">
+          <button type="button" class="btn-back-link" (click)="backToForm()" [disabled]="isVerifyingOtp">
+            ← Back / Change Email
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,664 @@
+<div class="sub-page fade-in">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-titles">
+        <h1 class="page-title">Recharge & Subscription Hub</h1>
+        <p class="page-subtitle">
+          Manage your active recharge pack, monitor real-time deal usage quotas, activate queued plans on demand, and track coupons published under each subscription cycle.
+        </p>
+      </div>
+      <button type="button" class="btn btn-primary" (click)="scrollToPlans()">
+        ⚡ Recharge New Pack ↓
+      </button>
+    </div>
+  </div>
+
+  <!-- UNAPPROVED MERCHANT STATUS BANNER -->
+  @if (merchantProfile && merchantProfile.status !== 'APPROVED') {
+    <div class="approval-warning-banner">
+      <div class="approval-banner-icon">
+        @if (merchantProfile.status === 'REJECTED') {
+          ⛔
+        } @else if (merchantProfile.status === 'SUSPENDED') {
+          ⚠️
+        } @else {
+          ⏳
+        }
+      </div>
+      <div class="approval-banner-text">
+        <div class="approval-banner-badge" [class.badge-rejected]="merchantProfile.status === 'REJECTED'">
+          ACCOUNT STATUS: {{ merchantProfile.status }}
+        </div>
+        <h3 class="approval-banner-heading">
+          Subscription Plans Locked - Admin Verification Required
+        </h3>
+        <p class="approval-banner-sub">
+          @if (merchantProfile.status === 'REJECTED') {
+            Your merchant application was rejected by the platform administrator. Subscription purchasing and deal publishing are currently unavailable.
+          } @else if (merchantProfile.status === 'SUSPENDED') {
+            Your merchant account is currently suspended. Subscription purchasing is locked.
+          } @else {
+            Your merchant store (<strong>{{ merchantProfile.businessName }}</strong>) is currently pending verification by the platform administrator.
+            You can review the available plans below, but <strong>subscribing and publishing deals will unlock automatically once your account is approved.</strong>
+          }
+        </p>
+      </div>
+    </div>
+  }
+
+  <!-- CURRENT ACTIVE RECHARGE PACK HERO DISPLAY -->
+  @if (activeSubscription) {
+    <div class="card active-sub-banner">
+      <div class="banner-top-ribbon">
+        <span class="active-badge">⚡ ACTIVE RECHARGE PACK</span>
+        @if (isExpiringSoon(activeSubscription.endDate)) {
+          <span class="alert-pill-warning">
+            ⚠️ Expiring in {{ getDaysRemaining(activeSubscription.endDate) }} days
+          </span>
+        } @else {
+          <span class="alert-pill-info">
+            ⏳ {{ getDaysRemaining(activeSubscription.endDate) }} days validity left
+          </span>
+        }
+      </div>
+
+      <div class="active-sub-content">
+        <div class="active-plan-info">
+          <span class="active-plan-title">{{ activeSubscription.planName }} Tier</span>
+          <div class="active-dates">
+            <span>Started: <strong>{{ activeSubscription.startDate }}</strong></span>
+            <span>•</span>
+            <span>Valid Until: <strong>{{ activeSubscription.endDate }}</strong></span>
+          </div>
+        </div>
+
+        <div class="active-metrics">
+          <div class="metric">
+            <span class="m-val">{{ publishedDealsCount }} / {{ activeSubscription.couponLimit }} Deals</span>
+            <span class="m-lbl">Deals Used ({{ remainingDealsCount }} Remaining)</span>
+          </div>
+          <div class="metric">
+            <span class="m-val">₹{{ activeSubscription.amount | number:'1.2-2' }}</span>
+            <span class="m-lbl">Pack Fee</span>
+          </div>
+          <app-status-badge [status]="activeSubscription.status"></app-status-badge>
+        </div>
+      </div>
+
+      <!-- Real-Time Recharge Quota Usage Meter -->
+      <div class="quota-container">
+        <div class="quota-meta">
+          <span class="quota-title">
+            Deal Publishing Quota: <strong>{{ quotaUsagePercentage }}% Used</strong>
+          </span>
+          <span class="quota-balance">
+            <strong>{{ remainingDealsCount }} deals</strong> remaining in this recharge cycle
+          </span>
+        </div>
+        <div class="quota-track">
+          <div
+            class="quota-fill"
+            [style.width.%]="quotaUsagePercentage"
+            [class.quota-near-limit]="quotaUsagePercentage >= 80"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Quick Action Controls for Active Pack -->
+      <div class="active-actions-row">
+        <button
+          type="button"
+          class="btn btn-outline-white btn-sm"
+          (click)="toggleActivePackCoupons()"
+        >
+          {{ isActivePackExpanded ? '✕ Hide Pack Deals' : '🎟️ View Deals In This Pack (' + publishedDealsCount + ')' }}
+        </button>
+        <a routerLink="/merchant/coupons/create" class="btn btn-accent btn-sm">
+          ➕ Create New Deal
+        </a>
+      </div>
+
+      <!-- Embedded Deals Drawer for Active Pack -->
+      @if (isActivePackExpanded) {
+        <div class="sub-deals-drawer fade-in">
+          <div class="drawer-header">
+            <h4 class="drawer-title">
+              🏷️ Deals Published Under Current {{ activeSubscription.planName }} Pack
+            </h4>
+            <span class="drawer-count">
+              {{ (couponsBySubId[activeSubscription.subscriptionId] || []).length }} of {{ activeSubscription.couponLimit }} used
+            </span>
+          </div>
+
+          @if (loadingCouponsForSub[activeSubscription.subscriptionId]) {
+            <div class="drawer-loading">
+              <span class="spinner-small"></span> Loading deals for this pack...
+            </div>
+          } @else if (!couponsBySubId[activeSubscription.subscriptionId] || couponsBySubId[activeSubscription.subscriptionId].length === 0) {
+            <div class="drawer-empty">
+              <p>No deals published under this pack yet.</p>
+              <a routerLink="/merchant/coupons/create" class="btn btn-primary btn-sm">
+                ➕ Publish First Deal Now
+              </a>
+            </div>
+          } @else {
+            <div class="sub-deals-table-wrap">
+              <table class="sub-deals-table">
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Deal Title</th>
+                    <th>Category</th>
+                    <th>Discount</th>
+                    <th>Valid Range</th>
+                    <th>Redemptions</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (c of couponsBySubId[activeSubscription.subscriptionId]; track c.couponId) {
+                    <tr>
+                      <td>
+                        <span class="coupon-code-chip">{{ c.couponCode }}</span>
+                      </td>
+                      <td>
+                        <strong>{{ c.title }}</strong>
+                      </td>
+                      <td>{{ c.category }}</td>
+                      <td>
+                        <span class="discount-pill">{{ c.discount }}% OFF</span>
+                      </td>
+                      <td class="date-cell">{{ c.validFrom | date:'mediumDate' }} - {{ c.validUntil | date:'mediumDate' }}</td>
+                      <td>{{ c.usageCount || 0 }} redeemed</td>
+                      <td>
+                        <app-status-badge [status]="c.status"></app-status-badge>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  @if (!activeSubscription && !isLoadingPlans) {
+    <div class="card no-sub-banner">
+      <div class="no-sub-badge">RECHARGE REQUIRED</div>
+      <div class="no-sub-content">
+        <span class="no-sub-title">No Active Recharge Pack Running</span>
+        <p class="no-sub-desc">
+          An active partner plan is required to publish coupons and broadcast deals to shoppers. Select any tier below or activate a queued pack to start publishing deals immediately.
+        </p>
+      </div>
+    </div>
+  }
+
+  <!-- ALL APPLIED SUBSCRIPTIONS (RECHARGE PACKS MANAGEMENT) -->
+  <div class="all-subs-section">
+    <div class="section-header-row">
+      <div>
+        <h2 class="section-title">Applied Subscriptions & Recharge Queue</h2>
+        <p class="section-subtitle">
+          View all subscriptions you applied, activate queued packs on demand, and check deal quotas & coupons per pack.
+        </p>
+      </div>
+
+      <!-- Tab filter pills -->
+      <div class="tab-pills">
+        <button
+          type="button"
+          class="tab-pill"
+          [class.active]="activeTab === 'all'"
+          (click)="activeTab = 'all'"
+        >
+          All Packs ({{ allSubscriptions.length }})
+        </button>
+        <button
+          type="button"
+          class="tab-pill"
+          [class.active]="activeTab === 'active_queued'"
+          (click)="activeTab = 'active_queued'"
+        >
+          Active & Queued ({{ upcomingSubscriptions.length + (activeSubscription ? 1 : 0) }})
+        </button>
+        <button
+          type="button"
+          class="tab-pill"
+          [class.active]="activeTab === 'expired'"
+          (click)="activeTab = 'expired'"
+        >
+          Pack History ({{ pastSubscriptions.length }})
+        </button>
+      </div>
+    </div>
+
+    @if (isLoadingSubscriptions) {
+      <app-loading-skeleton type="card"></app-loading-skeleton>
+    } @else if (filteredSubscriptions.length === 0) {
+      <div class="card empty-packs-card">
+        <p class="empty-text">No subscription packs found in this category.</p>
+        <button type="button" class="btn btn-outline btn-sm" (click)="scrollToPlans()">
+          Browse Recharge Plans ↓
+        </button>
+      </div>
+    } @else {
+      <div class="packs-list">
+        @for (sub of filteredSubscriptions; track sub.subscriptionId) {
+          <div
+            class="card pack-card"
+            [class.pack-card-active]="sub.status === 'ACTIVE'"
+            [class.pack-card-scheduled]="sub.status === 'SCHEDULED'"
+            [class.pack-card-expired]="sub.status === 'EXPIRED'"
+          >
+            <!-- Pack Top Header -->
+            <div class="pack-card-header">
+              <div class="pack-header-left">
+                <span class="pack-type-tag" [ngClass]="sub.status.toLowerCase()">
+                  @if (sub.status === 'ACTIVE') {
+                    ⚡ ACTIVE RECHARGE
+                  } @else if (sub.status === 'SCHEDULED') {
+                    📅 QUEUED RECHARGE
+                  } @else if (sub.status === 'EXPIRED') {
+                    ⌛ EXPIRED PACK
+                  } @else {
+                    {{ sub.status }}
+                  }
+                </span>
+                <h3 class="pack-name">{{ sub.planName }} Tier</h3>
+                <span class="pack-fee">₹{{ sub.amount | number:'1.2-2' }}</span>
+              </div>
+
+              <div class="pack-header-right">
+                <app-status-badge [status]="sub.status"></app-status-badge>
+                @if (sub.status === 'SCHEDULED' || sub.status === 'PENDING_VERIFICATION') {
+                  <button
+                    type="button"
+                    class="btn btn-accent btn-sm"
+                    [disabled]="activatingSubId === sub.subscriptionId"
+                    (click)="activatePlan(sub)"
+                  >
+                    @if (activatingSubId === sub.subscriptionId) {
+                      <span class="spinner-small"></span> Activating...
+                    } @else {
+                      ⚡ Activate Plan Now
+                    }
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Pack Dates Box -->
+            <div class="pack-dates-row">
+              <div class="date-col">
+                <span class="date-label">Start Date:</span>
+                <strong class="date-val">{{ sub.startDate || 'Immediate Upon Activation' }}</strong>
+              </div>
+              <div class="date-col">
+                <span class="date-label">End Date:</span>
+                <strong class="date-val">{{ sub.endDate || 'Calculated on activation' }}</strong>
+              </div>
+              <div class="date-col">
+                <span class="date-label">Subscription ID:</span>
+                <span class="date-val">#SUB-{{ sub.subscriptionId }}</span>
+              </div>
+            </div>
+
+            <!-- Pack Deal Quota Meter -->
+            <div class="pack-quota-meter">
+              <div class="meter-info">
+                <span>
+                  Deals Used: <strong>{{ getPlanDealsUsed(sub) }} / {{ getPlanDealsLimit(sub) }}</strong>
+                </span>
+                <span class="meter-remaining">
+                  <strong>{{ getPlanDealsRemaining(sub) }} Deals Left</strong>
+                </span>
+              </div>
+              <div class="meter-track">
+                <div
+                  class="meter-fill"
+                  [style.width.%]="getPlanUsagePercentage(sub)"
+                  [class.meter-fill-scheduled]="sub.status === 'SCHEDULED'"
+                  [class.meter-fill-expired]="sub.status === 'EXPIRED'"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Pack Bottom Controls: Accordion toggle -->
+            <div class="pack-bottom-bar">
+              <button
+                type="button"
+                class="btn btn-outline btn-sm"
+                (click)="toggleQueueSubscriptionCoupons(sub.subscriptionId)"
+              >
+                {{ isQueueSubExpanded(sub.subscriptionId) ? '✕ Hide Coupons' : '👁️ View Coupons Added Under This Pack (' + getPlanDealsUsed(sub) + ')' }}
+              </button>
+
+              @if (sub.status === 'SCHEDULED') {
+                <span class="scheduled-hint">
+                  ℹ️ Click "Activate Plan Now" above to make this pack your live plan immediately.
+                </span>
+              }
+            </div>
+
+            <!-- Expanded Coupons Drawer for this Pack -->
+            @if (isQueueSubExpanded(sub.subscriptionId)) {
+              <div class="sub-deals-drawer fade-in">
+                <div class="drawer-header">
+                  <h4 class="drawer-title">
+                    🏷️ Deals Created Under {{ sub.planName }} Pack (#SUB-{{ sub.subscriptionId }})
+                  </h4>
+                  <span class="drawer-count">
+                    {{ (couponsBySubId[sub.subscriptionId] || []).length }} deal(s) mapped
+                  </span>
+                </div>
+
+                @if (loadingCouponsForSub[sub.subscriptionId]) {
+                  <div class="drawer-loading">
+                    <span class="spinner-small"></span> Fetching deals created under this pack...
+                  </div>
+                } @else if (!couponsBySubId[sub.subscriptionId] || couponsBySubId[sub.subscriptionId].length === 0) {
+                  <div class="drawer-empty">
+                    <p>No coupons created under this subscription plan.</p>
+                    @if (sub.status === 'ACTIVE') {
+                      <a routerLink="/merchant/coupons/create" class="btn btn-primary btn-sm">
+                        ➕ Create Deal Now
+                      </a>
+                    }
+                  </div>
+                } @else {
+                  <div class="sub-deals-table-wrap">
+                    <table class="sub-deals-table">
+                      <thead>
+                        <tr>
+                          <th>Code</th>
+                          <th>Deal Title</th>
+                          <th>Category</th>
+                          <th>Discount</th>
+                          <th>Valid Range</th>
+                          <th>Redemptions</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (c of couponsBySubId[sub.subscriptionId]; track c.couponId) {
+                          <tr>
+                            <td>
+                              <span class="coupon-code-chip">{{ c.couponCode }}</span>
+                            </td>
+                            <td>
+                              <strong>{{ c.title }}</strong>
+                            </td>
+                            <td>{{ c.category }}</td>
+                            <td>
+                              <span class="discount-pill">{{ c.discount }}% OFF</span>
+                            </td>
+                            <td class="date-cell">{{ c.validFrom | date:'mediumDate' }} - {{ c.validUntil | date:'mediumDate' }}</td>
+                            <td>{{ c.usageCount || 0 }} redeemed</td>
+                            <td>
+                              <app-status-badge [status]="c.status"></app-status-badge>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- AVAILABLE TIERS CATALOG (RECHARGE NEW PLANS) -->
+  <div id="plansCatalogSection" class="plans-section">
+    <div class="plans-header-row">
+      <div>
+        <h2 class="plans-title">Browse & Recharge New Plans</h2>
+        <p class="plans-subtitle">Select a plan to recharge now or queue for automatic / manual activation</p>
+      </div>
+      @if (selectedPlan) {
+        <button type="button" class="btn btn-outline btn-sm" (click)="scrollToPayment()">
+          💳 Jump to Checkout ({{ selectedPlan.name }}) ↓
+        </button>
+      }
+    </div>
+
+    @if (isLoadingPlans) {
+      <app-loading-skeleton type="card"></app-loading-skeleton>
+    } @else {
+      <div class="plans-grid">
+        @for (plan of plans; track plan.planId) {
+          <div
+            class="card plan-card"
+            [class.selected-plan]="selectedPlan?.planId === plan.planId"
+            [class.is-current]="activeSubscription?.planName === plan.name"
+            [class.plan-card-locked]="!isApproved"
+            (click)="selectPlan(plan)"
+          >
+            <div class="plan-badge-wrapper">
+              @if (selectedPlan?.planId === plan.planId) {
+                <div class="selected-badge">✓ Selected for Checkout</div>
+              } @else if (activeSubscription?.planName === plan.name) {
+                <div class="current-plan-badge">✓ Current Active Tier</div>
+              } @else if (plan.name === 'Standard') {
+                <div class="popular-ribbon">⭐ Most Popular</div>
+              }
+            </div>
+
+            <div class="plan-header">
+              <h3 class="plan-name">{{ plan.name }}</h3>
+              <div class="plan-price">
+                <span class="currency">₹</span>
+                <span class="amount">{{ plan.price | number:'1.0-0' }}</span>
+                <span class="period">/ {{ plan.durationInMonths }} mo</span>
+              </div>
+            </div>
+
+            <div class="plan-features">
+              <div class="feature-item">
+                <span class="check-icon">✓</span>
+                <span><strong>{{ plan.couponLimit }} Deals</strong> Publishing Limit</span>
+              </div>
+              <div class="feature-item">
+                <span class="check-icon">✓</span>
+                <span><strong>{{ plan.durationInMonths }} Months</strong> Full Validity</span>
+              </div>
+              <div class="feature-item">
+                <span class="check-icon">✓</span>
+                <span>Smart Wilson Rank Placement</span>
+              </div>
+              <div class="feature-item">
+                <span class="check-icon">✓</span>
+                <span>Instant Alert Dispatch (SMS/Email)</span>
+              </div>
+              <div class="feature-item">
+                <span class="check-icon">✓</span>
+                <span>Live Analytics & Upvote Tracking</span>
+              </div>
+            </div>
+
+            <div class="plan-cta">
+              @if (isApproved) {
+                <button
+                  type="button"
+                  class="btn"
+                  [class.btn-primary]="selectedPlan?.planId === plan.planId"
+                  [class.btn-outline]="selectedPlan?.planId !== plan.planId"
+                  style="width: 100%;"
+                  (click)="onSelectButtonClick($event, plan)"
+                >
+                  {{ selectedPlan?.planId === plan.planId ? '✓ Plan Selected' : 'Recharge ' + plan.name }}
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="btn btn-secondary disabled-plan-btn"
+                  style="width: 100%;"
+                  (click)="onSelectButtonClick($event, plan)"
+                >
+                  🔒 Admin Approval Required
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- INLINE PAYMENT & CHECKOUT SECTION AT BOTTOM -->
+  @if (selectedPlan && isApproved) {
+    <div id="paymentSection" class="card payment-bottom-section fade-in">
+      <div class="payment-section-header">
+        <div class="payment-header-left">
+          <div class="payment-tag">SECURE CHECKOUT</div>
+          <h2 class="payment-title">Recharge & Plan Activation</h2>
+          <p class="payment-subtitle">
+            Complete your checkout to purchase <strong>{{ selectedPlan.name }} Plan</strong>.
+            @if (activeSubscription) {
+              It will be added to your recharge queue and can be activated anytime.
+            } @else {
+              It will activate immediately upon payment.
+            }
+          </p>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="selectedPlan = null">
+          ✕ Cancel Selection
+        </button>
+      </div>
+
+      <div class="payment-grid">
+        <!-- Order Summary Column -->
+        <div class="order-summary-box">
+          <h4 class="box-title">Order Summary</h4>
+          <div class="summary-line">
+            <span>Selected Tier:</span>
+            <strong>{{ selectedPlan.name }} Plan</strong>
+          </div>
+          <div class="summary-line">
+            <span>Validity Period:</span>
+            <span>{{ selectedPlan.durationInMonths }} Month(s)</span>
+          </div>
+          <div class="summary-line">
+            <span>Deal Publishing Quota:</span>
+            <span>{{ selectedPlan.couponLimit }} Active Deals</span>
+          </div>
+          <div class="summary-line">
+            <span>Recharge Mode:</span>
+            <span>{{ activeSubscription ? 'Queue for Manual/Auto Activation' : 'Immediate Activation' }}</span>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-line total-line">
+            <span>Total Payable Amount:</span>
+            <span class="total-amount">₹{{ selectedPlan.price | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <!-- Payment Method Details Column -->
+        <div class="payment-controls-box">
+          <h4 class="box-title">Select Payment Method</h4>
+          <div class="payment-methods-tabs">
+            <button
+              type="button"
+              class="method-tab"
+              [class.active]="paymentMethod === 'UPI'"
+              (click)="paymentMethod = 'UPI'"
+            >
+              📱 UPI (GPay / PhonePe / Paytm)
+            </button>
+            <button
+              type="button"
+              class="method-tab"
+              [class.active]="paymentMethod === 'CARD'"
+              (click)="paymentMethod = 'CARD'"
+            >
+              💳 Credit / Debit Card
+            </button>
+            <button
+              type="button"
+              class="method-tab"
+              [class.active]="paymentMethod === 'NETBANKING'"
+              (click)="paymentMethod = 'NETBANKING'"
+            >
+              🏦 Net Banking
+            </button>
+          </div>
+
+          <!-- Method Specific Inputs -->
+          @if (paymentMethod === 'UPI') {
+            <div class="method-fields fade-in">
+              <label class="form-label" for="upiId">Virtual Payment Address (UPI ID)</label>
+              <input
+                id="upiId"
+                type="text"
+                class="form-control"
+                [(ngModel)]="upiId"
+                placeholder="merchant@okhdfcbank"
+              />
+              <span class="hint-text">Supported: Google Pay, PhonePe, Paytm, BHIM UPI.</span>
+            </div>
+          } @else if (paymentMethod === 'CARD') {
+            <div class="method-fields fade-in">
+              <div class="form-group">
+                <label class="form-label" for="cardNumber">Card Number</label>
+                <input
+                  id="cardNumber"
+                  type="text"
+                  class="form-control"
+                  placeholder="•••• •••• •••• ••••"
+                  value="4242 •••• •••• 4242"
+                />
+              </div>
+              <div class="card-meta-row">
+                <div class="form-group">
+                  <label class="form-label" for="cardExp">Expiry Date</label>
+                  <input id="cardExp" type="text" class="form-control" placeholder="MM/YY" value="12/28" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="cardCvv">CVV</label>
+                  <input id="cardCvv" type="password" class="form-control" placeholder="•••" value="123" />
+                </div>
+              </div>
+            </div>
+          } @else {
+            <div class="method-fields fade-in">
+              <label class="form-label">Select Bank</label>
+              <select class="form-control">
+                <option selected>HDFC Bank</option>
+                <option>State Bank of India</option>
+                <option>ICICI Bank</option>
+                <option>Axis Bank</option>
+              </select>
+            </div>
+          }
+
+          <!-- Pay CTA Button -->
+          <div class="checkout-cta-wrap">
+            <button
+              type="button"
+              class="btn btn-primary btn-lg"
+              style="width: 100%;"
+              [disabled]="isPurchasing"
+              (click)="processCheckout()"
+            >
+              @if (isPurchasing) {
+                <span>Processing Payment & Activating...</span>
+              } @else {
+                <span>Pay ₹{{ selectedPlan.price | number:'1.2-2' }} & Confirm Recharge →</span>
+              }
+            </button>
+            <p class="security-note">
+              🔒 Instant activation via RabbitMQ distributed payment saga. 100% secure.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

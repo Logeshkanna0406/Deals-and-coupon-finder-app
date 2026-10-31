@@ -1,0 +1,122 @@
+<div class="deal-card card card-interactive fade-in" [class.deal-card-featured]="isFeatured">
+  <!-- Card Top: Discount & Category -->
+  <div class="deal-header">
+    <div class="deal-badge-group">
+      @if (isClaimed) {
+        <span class="claimed-badge">✓ Claimed</span>
+      }
+      <span class="discount-badge">
+        {{ coupon.discount }}% OFF
+      </span>
+      @if (coupon.cashbackPercentage && coupon.cashbackPercentage > 0) {
+        <span class="cashback-badge">
+          +{{ coupon.cashbackPercentage }}% Cashback
+        </span>
+      }
+    </div>
+    <span class="category-pill">{{ coupon.category }}</span>
+  </div>
+
+  <!-- Card Body -->
+  <div class="deal-body">
+    <div class="deal-merchant">{{ merchantName || 'Verified Merchant #' + coupon.merchantId }}</div>
+    <h4 class="deal-title" [title]="coupon.title">{{ coupon.title }}</h4>
+    <p class="deal-description">{{ coupon.description }}</p>
+
+    <!-- Coupon Code Box with Copy -->
+    <div class="coupon-code-box">
+      <div class="coupon-code-dashed">
+        <span class="code-text">{{ coupon.couponCode }}</span>
+        <button
+          type="button"
+          class="btn-copy"
+          (click)="copyCode($event)"
+          [title]="copied ? 'Copied!' : 'Copy Code'"
+        >
+          @if (copied) {
+            <span class="copied-text">✓ Copied</span>
+          } @else {
+            <span class="copy-action">📋 Copy</span>
+          }
+        </button>
+      </div>
+    </div>
+
+    <!-- FEATURE 2: Community Voting Buttons & Live Reliability -->
+    <div class="deal-voting-section">
+      <div class="voting-group">
+        <button
+          type="button"
+          class="vote-pill vote-up"
+          [class.selected]="userVote === 'UPVOTE'"
+          [disabled]="isVoting"
+          (click)="onVote($event, 'UPVOTE')"
+          [title]="userVote === 'UPVOTE' ? 'You upvoted this deal' : 'Vote: Deal worked'"
+        >
+          <span class="vote-icon">👍</span>
+          <span class="vote-count">{{ coupon.upvoteCount || 0 }}</span>
+        </button>
+        <button
+          type="button"
+          class="vote-pill vote-down"
+          [class.selected]="userVote === 'DOWNVOTE'"
+          [disabled]="isVoting"
+          (click)="onVote($event, 'DOWNVOTE')"
+          [title]="userVote === 'DOWNVOTE' ? 'You downvoted this deal' : 'Vote: Deal did not work'"
+        >
+          <span class="vote-icon">👎</span>
+          <span class="vote-count">{{ coupon.downvoteCount || 0 }}</span>
+        </button>
+      </div>
+
+      <div class="reliability-indicator" [title]="getReliabilityTooltip()">
+        @if (hasVotes()) {
+          <div class="stars">{{ getStarRating() }}</div>
+          <span class="score-text">
+            {{ getReliabilityPercent() }}%
+          </span>
+        } @else {
+          <span class="new-deal-badge">✨ New Deal</span>
+        }
+      </div>
+    </div>
+
+    <!-- Usage Count -->
+    <div class="deal-usage-bar">
+      <span class="usage-count" title="Times redeemed">
+        👥 {{ coupon.usageCount }} / {{ coupon.usageLimit }} used
+      </span>
+    </div>
+  </div>
+
+  <!-- Card Footer -->
+  <div class="deal-footer">
+    <div class="validity-info">
+      <span class="validity-label">Valid until:</span>
+      <span class="validity-date">{{ formatDate(coupon.validUntil) }}</span>
+    </div>
+    <div class="deal-actions">
+      <a [routerLink]="['/deals', coupon.couponId]" class="btn btn-outline btn-sm">
+        Details
+      </a>
+      @if (isClaimed) {
+        <button
+          type="button"
+          class="btn btn-secondary btn-sm btn-claimed"
+          (click)="onRedeemClick($event)"
+          title="You have already redeemed this deal"
+        >
+          ✓ Claimed
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="btn btn-accent btn-sm"
+          (click)="onRedeemClick($event)"
+        >
+          Redeem
+        </button>
+      }
+    </div>
+  </div>
+</div>

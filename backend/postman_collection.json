@@ -1,0 +1,3883 @@
+{
+  "info": {
+    "_postman_id": "9b12a83e-1082-411a-a038-deals-coupons-e2e",
+    "name": "Deals & Coupons Platform - Complete API Suite",
+    "description": "Comprehensive Postman collection for Deals, Coupons & Merchant Subscription Platform (API Gateway Port 8080).\n\nFeatures:\n- 10 Microservices + Gateway Actuator Endpoints\n- Complete JWT Authentication & Role-based Authorization (ADMIN, MERCHANT, CUSTOMER)\n- Dynamic Collection Variable Extraction (Tokens, IDs) via JavaScript test scripts\n- End-to-End Orchestrated Business Flow (Merchant Onboarding -> Subscription Saga -> Coupon Lifecycle -> Redemption & Cashback -> Platform Revenue & Alerts)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "merchant_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customer_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@dealsplatform.com",
+      "type": "string"
+    },
+    {
+      "key": "merchantEmail",
+      "value": "merchant@pizzaplanet.com",
+      "type": "string"
+    },
+    {
+      "key": "customerEmail",
+      "value": "alice@gmail.com",
+      "type": "string"
+    },
+    {
+      "key": "merchantId",
+      "value": "2",
+      "type": "string"
+    },
+    {
+      "key": "customerId",
+      "value": "3",
+      "type": "string"
+    },
+    {
+      "key": "planId",
+      "value": "2",
+      "type": "string"
+    },
+    {
+      "key": "subscriptionId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "couponId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "paymentId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "redemptionId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "resetToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Auth Service",
+      "item": [
+        {
+          "name": "Register Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/customer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                "customer"
+              ]
+            },
+            "description": "Register a new customer account with shopping preferences. Automatically extracts JWT customer_token, refreshToken, and customerId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Customer\",\n  \"email\": \"alice@gmail.com\",\n  \"password\": \"password123\",\n  \"phone\": \"9123456780\",\n  \"preferences\": \"Food & Dining, Electronics, Fashion\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.token) {",
+                  "        pm.collectionVariables.set('customer_token', data.token);",
+                  "    }",
+                  "    if (data.refreshToken) {",
+                  "        pm.collectionVariables.set('refreshToken', data.refreshToken);",
+                  "    }",
+                  "    if (data.userId) {",
+                  "        pm.collectionVariables.set('customerId', data.userId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register Merchant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/merchant",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                "merchant"
+              ]
+            },
+            "description": "Register a new merchant account. Merchant is created with PENDING status awaiting Admin approval. Automatically extracts merchant_token, refreshToken, and merchantId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessName\": \"Pizza Planet\",\n  \"ownerName\": \"John Doe\",\n  \"email\": \"merchant@pizzaplanet.com\",\n  \"password\": \"password123\",\n  \"phone\": \"9876543210\",\n  \"category\": \"Food & Dining\",\n  \"address\": \"101 Food Avenue, Silicon Valley\",\n  \"description\": \"Best woodfired artisan pizzas and Italian pastas\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.token) {",
+                  "        pm.collectionVariables.set('merchant_token', data.token);",
+                  "    }",
+                  "    if (data.refreshToken) {",
+                  "        pm.collectionVariables.set('refreshToken', data.refreshToken);",
+                  "    }",
+                  "    if (data.userId) {",
+                  "        pm.collectionVariables.set('merchantId', data.userId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Authenticate as Platform Admin. Extracts admin_token and refreshToken.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@dealsplatform.com\",\n  \"password\": \"admin123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.token) {",
+                  "        pm.collectionVariables.set('admin_token', data.token);",
+                  "    }",
+                  "    if (data.refreshToken) {",
+                  "        pm.collectionVariables.set('refreshToken', data.refreshToken);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (Merchant)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Authenticate as Merchant. Extracts merchant_token, refreshToken, and merchantId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"merchant@pizzaplanet.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.token) {",
+                  "        pm.collectionVariables.set('merchant_token', data.token);",
+                  "    }",
+                  "    if (data.refreshToken) {",
+                  "        pm.collectionVariables.set('refreshToken', data.refreshToken);",
+                  "    }",
+                  "    if (data.userId) {",
+                  "        pm.collectionVariables.set('merchantId', data.userId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (Customer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Authenticate as Customer. Extracts customer_token, refreshToken, and customerId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@gmail.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.token) {",
+                  "        pm.collectionVariables.set('customer_token', data.token);",
+                  "    }",
+                  "    if (data.refreshToken) {",
+                  "        pm.collectionVariables.set('refreshToken', data.refreshToken);",
+                  "    }",
+                  "    if (data.userId) {",
+                  "        pm.collectionVariables.set('customerId', data.userId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh-token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh-token"
+              ]
+            },
+            "description": "Generate a new access token using a valid, non-revoked refresh token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.token) {",
+                  "        if (data.role === 'ADMIN') pm.collectionVariables.set('admin_token', data.token);",
+                  "        else if (data.role === 'MERCHANT') pm.collectionVariables.set('merchant_token', data.token);",
+                  "        else pm.collectionVariables.set('customer_token', data.token);",
+                  "    }",
+                  "    if (data.refreshToken) {",
+                  "        pm.collectionVariables.set('refreshToken', data.refreshToken);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Generate a secure 60-minute password reset token for account recovery.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@gmail.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.resetToken) {",
+                  "        pm.collectionVariables.set('resetToken', data.resetToken);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Reset user password using the token received from Forgot Password.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"newpassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Invalidate user session and revoke refresh token in database.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Customer Service",
+      "item": [
+        {
+          "name": "Get Customer Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "customers",
+                "{{customerId}}"
+              ]
+            },
+            "description": "Fetch customer profile details by ID."
+          }
+        },
+        {
+          "name": "Update Customer Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "customers",
+                "{{customerId}}"
+              ]
+            },
+            "description": "Update customer personal profile name, phone, and shopping preferences.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice M. Customer\",\n  \"phone\": \"9123456789\",\n  \"preferences\": \"Food & Dining, Electronics, Fashion, Fitness\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update Customer Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/{{customerId}}/preferences",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "customers",
+                "{{customerId}}",
+                "preferences"
+              ]
+            },
+            "description": "Update customer category shopping preferences.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preferences\": \"Food & Dining, Electronics, Fashion, Fitness, Travel\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Customer Wallet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/{{customerId}}/wallet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "customers",
+                "{{customerId}}",
+                "wallet"
+              ]
+            },
+            "description": "Retrieve customer wallet balance from Cashback microservice via Feign client."
+          }
+        },
+        {
+          "name": "Get Customer Cashback Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/{{customerId}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "customers",
+                "{{customerId}}",
+                "transactions"
+              ]
+            },
+            "description": "Retrieve all cashback credit and debit transaction history for customer."
+          }
+        },
+        {
+          "name": "Get Customer Redemptions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/{{customerId}}/redemptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "customers",
+                "{{customerId}}",
+                "redemptions"
+              ]
+            },
+            "description": "Retrieve all coupon redemption records for customer via Redemption microservice."
+          }
+        },
+        {
+          "name": "Internal Sync Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/internal",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "customers",
+                "internal"
+              ]
+            },
+            "description": "Internal sync endpoint: create/sync customer profile from Auth Service.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 3,\n  \"name\": \"Alice Customer\",\n  \"email\": \"alice@gmail.com\",\n  \"phone\": \"9123456780\",\n  \"preferences\": \"Food & Dining, Electronics\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Merchant Service",
+      "item": [
+        {
+          "name": "Get All Merchants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/merchants",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "merchants"
+              ]
+            },
+            "description": "Retrieve all registered merchants across the platform (Admin)."
+          }
+        },
+        {
+          "name": "Get Merchant by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/merchants/{{merchantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "merchants",
+                "{{merchantId}}"
+              ]
+            },
+            "description": "Retrieve merchant profile by ID."
+          }
+        },
+        {
+          "name": "Update Merchant Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/merchants/{{merchantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "merchants",
+                "{{merchantId}}"
+              ]
+            },
+            "description": "Update merchant business details, contact phone, category, and address.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessName\": \"Pizza Planet & Gourmet Grill\",\n  \"ownerName\": \"John Doe\",\n  \"phone\": \"9876543210\",\n  \"category\": \"Food & Dining\",\n  \"address\": \"102 Gourmet Boulevard, Silicon Valley\",\n  \"description\": \"Award-winning woodfired artisan pizzas and grills\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Merchant Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/merchants/{{merchantId}}/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "merchants",
+                "{{merchantId}}",
+                "dashboard"
+              ]
+            },
+            "description": "Aggregated dashboard: returns merchant profile, active subscription plan, total & active coupons, and total redemption count."
+          }
+        },
+        {
+          "name": "Update Merchant Status (Direct)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/merchants/{{merchantId}}/status?status=APPROVED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "merchants",
+                "{{merchantId}}",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "APPROVED"
+                }
+              ]
+            },
+            "description": "Direct update of merchant status: PENDING, APPROVED, REJECTED, SUSPENDED."
+          }
+        },
+        {
+          "name": "Internal Sync Merchant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/merchants/internal",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "merchants",
+                "internal"
+              ]
+            },
+            "description": "Internal sync endpoint: create/sync merchant profile from Auth Service.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"merchantId\": 2,\n  \"businessName\": \"Pizza Planet\",\n  \"ownerName\": \"John Doe\",\n  \"email\": \"merchant@pizzaplanet.com\",\n  \"phone\": \"9876543210\",\n  \"category\": \"Food & Dining\",\n  \"address\": \"101 Food Avenue\",\n  \"description\": \"Best woodfired artisan pizzas\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Subscription Service",
+      "item": [
+        {
+          "name": "Get All Subscription Plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions/plans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions",
+                "plans"
+              ]
+            },
+            "description": "Get available tiers: Basic (₹299/mo), Standard (₹999/3mo), Premium (₹2499/6mo), Business (₹4499/yr)."
+          }
+        },
+        {
+          "name": "Create Subscription Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions/plans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions",
+                "plans"
+              ]
+            },
+            "description": "Create a new subscription plan directly via Subscription microservice.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Enterprise Plus\",\n  \"durationInMonths\": 12,\n  \"price\": 4999.00,\n  \"couponLimit\": 200,\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Subscription Plan by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions/plans/{{planId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions",
+                "plans",
+                "{{planId}}"
+              ]
+            },
+            "description": "Get detailed plan specs: maxCoupons, durationDays, price, features."
+          }
+        },
+        {
+          "name": "Purchase Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions"
+              ]
+            },
+            "description": "Purchase a subscription plan. Record created with PENDING_VERIFICATION until mock payment (POST /api/payments) is made.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"merchantId\": 2,\n  \"planId\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.subscriptionId || data.id) {",
+                  "        pm.collectionVariables.set('subscriptionId', data.subscriptionId || data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Subscription by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions/{{subscriptionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions",
+                "{{subscriptionId}}"
+              ]
+            },
+            "description": "Get subscription details by subscription ID."
+          }
+        },
+        {
+          "name": "Get Subscriptions by Merchant",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions/merchant/{{merchantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions",
+                "merchant",
+                "{{merchantId}}"
+              ]
+            },
+            "description": "Get all subscription purchase history for a merchant."
+          }
+        },
+        {
+          "name": "Get Active Subscription for Merchant",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions/merchant/{{merchantId}}/active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions",
+                "merchant",
+                "{{merchantId}}",
+                "active"
+              ]
+            },
+            "description": "Get currently active subscription for a merchant. Used by Coupon service to validate posting limits."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Payment Service",
+      "item": [
+        {
+          "name": "Create Mock Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments"
+              ]
+            },
+            "description": "Create mock payment for subscription. Payment is automatically processed as successful (VERIFIED) and dispatches PaymentVerifiedEvent to RabbitMQ to activate merchant subscription automatically without Admin intervention.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"merchantId\": 2,\n  \"subscriptionId\": 1,\n  \"amount\": 999.0,\n  \"paymentMethod\": \"UPI\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.paymentId || data.id) {",
+                  "        pm.collectionVariables.set('paymentId', data.paymentId || data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Payment by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/{{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "{{paymentId}}"
+              ]
+            },
+            "description": "Get payment transaction record by ID."
+          }
+        },
+        {
+          "name": "Get Payments by Merchant",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/merchant/{{merchantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "merchant",
+                "{{merchantId}}"
+              ]
+            },
+            "description": "Get all payment records for a merchant."
+          }
+        },
+        {
+          "name": "Get All Payments (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments"
+              ]
+            },
+            "description": "Retrieve all platform payments for admin audit."
+          }
+        },
+        {
+          "name": "Verify Payment (Direct)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "{{adminEmail}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/{{paymentId}}/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "{{paymentId}}",
+                "verify"
+              ]
+            },
+            "description": "Admin manual audit/verification endpoint. Note: In the self-service flow, mock payment (POST /api/payments) is automatically verified without requiring this manual admin call."
+          }
+        },
+        {
+          "name": "Reject Payment (Direct)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "{{adminEmail}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/{{paymentId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "{{paymentId}}",
+                "reject"
+              ]
+            },
+            "description": "Admin rejects payment transaction."
+          }
+        },
+        {
+          "name": "Get Platform Revenue Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/revenue",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "revenue"
+              ]
+            },
+            "description": "Calculate total verified subscription revenue across all merchant subscriptions."
+          }
+        },
+        {
+          "name": "Get Merchant Revenue Summary (All Merchants)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/revenue/merchants",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "revenue",
+                "merchants"
+              ]
+            },
+            "description": "Get verified subscription revenue grouped by merchant (Admin/Internal)."
+          }
+        },
+        {
+          "name": "Get Merchant Revenue for Specific Merchant",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/revenue/merchants/{{merchantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "revenue",
+                "merchants",
+                "{{merchantId}}"
+              ]
+            },
+            "description": "Get verified subscription revenue and payment count for a specific merchant."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Coupon Service",
+      "item": [
+        {
+          "name": "Create Coupon (Merchant)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons"
+              ]
+            },
+            "description": "Merchant posts deal/coupon within active subscription window. Status: PENDING_APPROVAL.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"merchantId\": 2,\n  \"title\": \"50% Off Gourmet Pizzas\",\n  \"description\": \"Get 50% discount on all medium & large pizzas\",\n  \"category\": \"Food & Dining\",\n  \"discount\": 50.0,\n  \"cashbackPercentage\": 5.0,\n  \"couponCode\": \"PIZZA50\",\n  \"minimumPurchase\": 500.0,\n  \"validityHours\": 24,\n  \"usageLimit\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.couponId || data.id) {",
+                  "        pm.collectionVariables.set('couponId', data.couponId || data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Coupon - Exceeding Subscription Expiry (Rejected)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons"
+              ]
+            },
+            "description": "Validation error test: Coupon validUntil exceeds the active subscription expiry date. Expected: HTTP 400 Bad Request.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"merchantId\": 2,\n  \"title\": \"Ultra Long Deal\",\n  \"description\": \"Invalid validity exceeding active subscription\",\n  \"category\": \"Food & Dining\",\n  \"discount\": 50.0,\n  \"cashbackPercentage\": 5.0,\n  \"couponCode\": \"EXCEED2029\",\n  \"minimumPurchase\": 500.0,\n  \"validFrom\": \"2026-09-01T00:00:00\",\n  \"validUntil\": \"2029-12-31T23:59:59\",\n  \"usageLimit\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create Coupon - Starting Before Subscription (Rejected)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons"
+              ]
+            },
+            "description": "Validation error test: Coupon validFrom is before the subscription start date. Expected: HTTP 400 Bad Request.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"merchantId\": 2,\n  \"title\": \"Early Deal\",\n  \"description\": \"Invalid validity starting before active subscription\",\n  \"category\": \"Food & Dining\",\n  \"discount\": 50.0,\n  \"cashbackPercentage\": 5.0,\n  \"couponCode\": \"EARLY2020\",\n  \"minimumPurchase\": 500.0,\n  \"validFrom\": \"2020-01-01T00:00:00\",\n  \"validUntil\": \"2026-10-31T23:59:59\",\n  \"usageLimit\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Active Coupons (Customer Discovery)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons"
+              ]
+            },
+            "description": "Public/Customer discovery of currently active, non-expired coupons within usage limits."
+          }
+        },
+        {
+          "name": "Get All Coupons (Admin Review)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "all"
+              ]
+            },
+            "description": "Admin view of all coupons regardless of status (PENDING_APPROVAL, ACTIVE, REJECTED, EXPIRED)."
+          }
+        },
+        {
+          "name": "Get Coupon by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/{{couponId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "{{couponId}}"
+              ]
+            },
+            "description": "Get single coupon details by ID."
+          }
+        },
+        {
+          "name": "Get Coupons by Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/category/Food%20%26%20Dining",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "category",
+                "Food%20%26%20Dining"
+              ]
+            },
+            "description": "Filter active coupons by shopping category."
+          }
+        },
+        {
+          "name": "Get Coupons by Merchant",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/merchant/{{merchantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "merchant",
+                "{{merchantId}}"
+              ]
+            },
+            "description": "Get all coupons posted by a specific merchant."
+          }
+        },
+        {
+          "name": "Update Coupon (Permitted Fields)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/{{couponId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "{{couponId}}"
+              ]
+            },
+            "description": "Update permitted coupon fields (title, description, discount, cashback, minimumPurchase, usageLimit). Validity dates remain strictly immutable.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"50% Off Gourmet Pizzas (Weekend Special)\",\n  \"description\": \"Updated description: flat 50% discount on entire menu\",\n  \"category\": \"Food & Dining\",\n  \"discount\": 50.0,\n  \"cashbackPercentage\": 5.0,\n  \"minimumPurchase\": 450.0,\n  \"usageLimit\": 150\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update Coupon - Attempting to Change validUntil (Rejected)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/{{couponId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "{{couponId}}"
+              ]
+            },
+            "description": "Attempt to modify validUntil. Expected: HTTP 400 Bad Request ('Coupon validity dates cannot be modified after creation.').",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Extended Pizza Deal\",\n  \"description\": \"Attempting to extend validUntil\",\n  \"category\": \"Food & Dining\",\n  \"discount\": 50.0,\n  \"minimumPurchase\": 450.0,\n  \"usageLimit\": 150,\n  \"validUntil\": \"2029-12-31T23:59:59\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update Coupon - Attempting to Change validFrom (Rejected)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/{{couponId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "{{couponId}}"
+              ]
+            },
+            "description": "Attempt to modify validFrom. Expected: HTTP 400 Bad Request ('Coupon validity dates cannot be modified after creation.').",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Backdated Pizza Deal\",\n  \"description\": \"Attempting to modify validFrom\",\n  \"category\": \"Food & Dining\",\n  \"discount\": 50.0,\n  \"minimumPurchase\": 450.0,\n  \"usageLimit\": 150,\n  \"validFrom\": \"2026-01-01T00:00:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Approve Coupon (Direct)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "{{adminEmail}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/{{couponId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "{{couponId}}",
+                "approve"
+              ]
+            },
+            "description": "Admin approves coupon (Status -> ACTIVE) making it visible to customers."
+          }
+        },
+        {
+          "name": "Reject Coupon (Direct)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "{{adminEmail}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/{{couponId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "{{couponId}}",
+                "reject"
+              ]
+            },
+            "description": "Admin rejects coupon (Status -> REJECTED)."
+          }
+        },
+        {
+          "name": "Delete Coupon",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/{{couponId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "{{couponId}}"
+              ]
+            },
+            "description": "Deactivate / soft-delete coupon deal."
+          }
+        },
+        {
+          "name": "Increment Coupon Usage (Internal)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/{{couponId}}/increment-usage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "{{couponId}}",
+                "increment-usage"
+              ]
+            },
+            "description": "Internal endpoint called by Redemption service to track coupon usage."
+          }
+        },
+        {
+          "name": "Vote on Coupon (UPVOTE/DOWNVOTE)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/{{couponId}}/votes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "{{couponId}}",
+                "votes"
+              ]
+            },
+            "description": "Customer casts an UPVOTE or DOWNVOTE for a coupon they have redeemed/used. Re-voting updates the customer's vote and recalculates reliability. If totalVotes >= 10 and reliabilityScore < 40%, coupon status automatically transitions to HIDDEN.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": 3,\n  \"voteType\": \"UPVOTE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Coupon Reliability",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/{{couponId}}/reliability",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "{{couponId}}",
+                "reliability"
+              ]
+            },
+            "description": "Get crowdsourced reliability score, upvotes, downvotes, total votes, threshold, and status for a coupon."
+          }
+        },
+        {
+          "name": "Get Ranked Active Coupons (Smart Rank)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons/ranked",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons",
+                "ranked"
+              ]
+            },
+            "description": "Get all active coupons sorted by crowdsourced smart rank: reliabilityScore DESC -> totalVotes DESC -> createdAt DESC."
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Redemption Service",
+      "item": [
+        {
+          "name": "Redeem Coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/redemptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "redemptions"
+              ]
+            },
+            "description": "Customer redeems a coupon against an order. Calculates discount amount and dispatches CouponRedeemedEvent to RabbitMQ to credit cashback to customer wallet.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponId\": 1,\n  \"customerId\": 3,\n  \"purchaseAmount\": 1000.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.redemptionId || data.id) {",
+                  "        pm.collectionVariables.set('redemptionId', data.redemptionId || data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Redemption by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/redemptions/{{redemptionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "redemptions",
+                "{{redemptionId}}"
+              ]
+            },
+            "description": "Get redemption transaction details by ID."
+          }
+        },
+        {
+          "name": "Get Customer Redemptions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/{{customerId}}/redemptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "customers",
+                "{{customerId}}",
+                "redemptions"
+              ]
+            },
+            "description": "Get all redemptions made by a customer."
+          }
+        },
+        {
+          "name": "Get Merchant Redemptions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/merchants/{{merchantId}}/redemptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "merchants",
+                "{{merchantId}}",
+                "redemptions"
+              ]
+            },
+            "description": "Get all redemptions completed for merchant coupons."
+          }
+        },
+        {
+          "name": "Get Customer Redemption History (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/redemptions/my-history?customerId={{customerId}}&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "redemptions",
+                "my-history"
+              ],
+              "query": [
+                {
+                  "key": "customerId",
+                  "value": "{{customerId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get paginated redemption history with coupon details, merchant details, discount, and status for a customer."
+          }
+        },
+        {
+          "name": "Get Recent Customer Redemptions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/redemptions/my-history/recent?customerId={{customerId}}&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "redemptions",
+                "my-history",
+                "recent"
+              ],
+              "query": [
+                {
+                  "key": "customerId",
+                  "value": "{{customerId}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get recent coupon redemptions for a customer (default up to 10)."
+          }
+        },
+        {
+          "name": "Check if Customer Redeemed Coupon (Internal)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/redemptions/check?customerId={{customerId}}&couponId={{couponId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "redemptions",
+                "check"
+              ],
+              "query": [
+                {
+                  "key": "customerId",
+                  "value": "{{customerId}}"
+                },
+                {
+                  "key": "couponId",
+                  "value": "{{couponId}}"
+                }
+              ]
+            },
+            "description": "Internal endpoint: Check whether a customer has already redeemed a specific coupon."
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Cashback & Points Service",
+      "item": [
+        {
+          "name": "Get Customer Wallet Balance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cashback/wallet/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cashback",
+                "wallet",
+                "{{customerId}}"
+              ]
+            },
+            "description": "Get customer digital cashback wallet balance."
+          }
+        },
+        {
+          "name": "Get Cashback Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cashback/transactions/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cashback",
+                "transactions",
+                "{{customerId}}"
+              ]
+            },
+            "description": "Get customer cashback credit (from redemptions) and debit (from withdrawals) ledger."
+          }
+        },
+        {
+          "name": "Redeem / Withdraw Cashback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cashback/redeem",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cashback",
+                "redeem"
+              ]
+            },
+            "description": "Withdraw or redeem accumulated cashback balance from customer wallet.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": 3,\n  \"amount\": 20.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Customer Point Balance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/points/customer/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "points",
+                "customer",
+                "{{customerId}}"
+              ]
+            },
+            "description": "Get customer reward points balance, total earned, and total redeemed."
+          }
+        },
+        {
+          "name": "Get Customer Point Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/points/customer/{{customerId}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "points",
+                "customer",
+                "{{customerId}}",
+                "transactions"
+              ]
+            },
+            "description": "Get points ledger history (points earned per redemption, points spent on redemption to cash)."
+          }
+        },
+        {
+          "name": "Get Customer Tier Requirements",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/points/customer/{{customerId}}/tier",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "points",
+                "customer",
+                "{{customerId}}",
+                "tier"
+              ]
+            },
+            "description": "Get customer loyalty tier status (BRONZE, SILVER, GOLD, PLATINUM), cashback bonus multiplier, and points required for next tier."
+          }
+        },
+        {
+          "name": "Get My Customer Tier (Authenticated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/points/my-tier",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "points",
+                "my-tier"
+              ]
+            },
+            "description": "Get currently authenticated customer's loyalty tier, perks, and next tier progression."
+          }
+        },
+        {
+          "name": "Convert Points to Wallet Money (100 pts -> ₹10)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/points/redeem",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "points",
+                "redeem"
+              ]
+            },
+            "description": "Convert customer reward points to wallet cash (100 points = ₹10).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": 3,\n  \"points\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Admin Service",
+      "item": [
+        {
+          "name": "Admin - Get All Merchants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/merchants",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "merchants"
+              ]
+            },
+            "description": "Admin retrieves all registered merchants across platform."
+          }
+        },
+        {
+          "name": "Admin - Approve Merchant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "{{adminEmail}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/merchants/{{merchantId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "merchants",
+                "{{merchantId}}",
+                "approve"
+              ]
+            },
+            "description": "Admin approves merchant application (Status -> APPROVED)."
+          }
+        },
+        {
+          "name": "Admin - Reject Merchant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "{{adminEmail}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/merchants/{{merchantId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "merchants",
+                "{{merchantId}}",
+                "reject"
+              ]
+            },
+            "description": "Admin rejects merchant application (Status -> REJECTED)."
+          }
+        },
+        {
+          "name": "Admin - Suspend Merchant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "{{adminEmail}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/merchants/{{merchantId}}/suspend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "merchants",
+                "{{merchantId}}",
+                "suspend"
+              ]
+            },
+            "description": "Admin suspends merchant (Status -> SUSPENDED)."
+          }
+        },
+        {
+          "name": "Admin - Get All Coupons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "coupons"
+              ]
+            },
+            "description": "Admin retrieves all coupons submitted for moderation."
+          }
+        },
+        {
+          "name": "Admin - Approve Coupon",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "{{adminEmail}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/coupons/{{couponId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "coupons",
+                "{{couponId}}",
+                "approve"
+              ]
+            },
+            "description": "Admin approves coupon (Status -> ACTIVE) enabling it on public discovery."
+          }
+        },
+        {
+          "name": "Admin - Reject Coupon",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "{{adminEmail}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/coupons/{{couponId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "coupons",
+                "{{couponId}}",
+                "reject"
+              ]
+            },
+            "description": "Admin rejects coupon deal."
+          }
+        },
+        {
+          "name": "Admin - Get All Payments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payments"
+              ]
+            },
+            "description": "Admin retrieves all subscription payments across platform."
+          }
+        },
+        {
+          "name": "Admin - Verify Payment & Trigger Saga",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "{{adminEmail}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/payments/{{paymentId}}/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payments",
+                "{{paymentId}}",
+                "verify"
+              ]
+            },
+            "description": "Admin manual payment verification/audit override endpoint. Standard merchant mock payments are auto-verified upon creation."
+          }
+        },
+        {
+          "name": "Admin - Revenue Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/revenue",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "revenue"
+              ]
+            },
+            "description": "Platform executive revenue metrics: verified total gross subscription revenue."
+          }
+        },
+        {
+          "name": "Admin - Merchant-Wise Revenue Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/revenue/merchants",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "revenue",
+                "merchants"
+              ]
+            },
+            "description": "Platform revenue grouped by merchant with individual transaction counts and totals."
+          }
+        },
+        {
+          "name": "Admin - Merchant-Wise Revenue Summary (Date Filter)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/revenue/merchants?fromDate=2026-09-01&toDate=2026-09-30",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "revenue",
+                "merchants"
+              ],
+              "query": [
+                {
+                  "key": "fromDate",
+                  "value": "2026-09-01"
+                },
+                {
+                  "key": "toDate",
+                  "value": "2026-09-30"
+                }
+              ]
+            },
+            "description": "Platform revenue grouped by merchant filtered by payment date range."
+          }
+        },
+        {
+          "name": "Admin - Specific Merchant Revenue",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/revenue/merchants/{{merchantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "revenue",
+                "merchants",
+                "{{merchantId}}"
+              ]
+            },
+            "description": "Get verified subscription revenue and payment count for a specific merchant."
+          }
+        },
+        {
+          "name": "Admin - Create Subscription Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "{{adminEmail}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/subscription-plans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "subscription-plans"
+              ]
+            },
+            "description": "Admin dynamically creates a new subscription tier with custom duration, price, and coupon posting limits.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Enterprise Plus\",\n  \"durationInMonths\": 12,\n  \"price\": 4999.00,\n  \"couponLimit\": 200,\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Merchant Alert Service",
+      "item": [
+        {
+          "name": "Get Followed Merchants (Interests)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/merchant-alerts/interests?customerId={{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "merchant-alerts",
+                "interests"
+              ],
+              "query": [
+                {
+                  "key": "customerId",
+                  "value": "{{customerId}}"
+                }
+              ]
+            },
+            "description": "Get list of merchants the customer is actively following for deals and coupon alerts."
+          }
+        },
+        {
+          "name": "Follow Merchant for Alerts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/merchant-alerts/follow/{{merchantId}}?customerId={{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "merchant-alerts",
+                "follow",
+                "{{merchantId}}"
+              ],
+              "query": [
+                {
+                  "key": "customerId",
+                  "value": "{{customerId}}"
+                }
+              ]
+            },
+            "description": "Customer follows a merchant to receive instant notifications when new deals/coupons are published."
+          }
+        },
+        {
+          "name": "Unfollow Merchant",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/merchant-alerts/follow/{{merchantId}}?customerId={{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "merchant-alerts",
+                "follow",
+                "{{merchantId}}"
+              ],
+              "query": [
+                {
+                  "key": "customerId",
+                  "value": "{{customerId}}"
+                }
+              ]
+            },
+            "description": "Customer unfollows a merchant to stop receiving alerts."
+          }
+        },
+        {
+          "name": "Get Alert Channel Preferences",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/merchant-alerts/preferences?customerId={{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "merchant-alerts",
+                "preferences"
+              ],
+              "query": [
+                {
+                  "key": "customerId",
+                  "value": "{{customerId}}"
+                }
+              ]
+            },
+            "description": "Get customer alert channel settings (emailEnabled, smsEnabled, inAppEnabled)."
+          }
+        },
+        {
+          "name": "Update Alert Channel Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/merchant-alerts/preferences",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "merchant-alerts",
+                "preferences"
+              ]
+            },
+            "description": "Update customer notification preferences for deals & alerts.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": 3,\n  \"emailEnabled\": true,\n  \"smsEnabled\": true,\n  \"inAppEnabled\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Notification Service",
+      "item": [
+        {
+          "name": "Get All Notification Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
+            },
+            "description": "Retrieve all dispatched SMS/Email notification logs triggered by RabbitMQ events."
+          }
+        },
+        {
+          "name": "Get Notifications by Recipient Email/Phone",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/recipient/{{merchantEmail}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "recipient",
+                "{{merchantEmail}}"
+              ]
+            },
+            "description": "Filter notification logs for a specific merchant or customer recipient."
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Infrastructure & Gateway Actuator",
+      "item": [
+        {
+          "name": "Gateway Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Check API Gateway and microservices health status."
+          }
+        },
+        {
+          "name": "Gateway Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/info",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "info"
+              ]
+            },
+            "description": "Retrieve API Gateway build and runtime info."
+          }
+        },
+        {
+          "name": "Gateway Registered Routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/gateway/routes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "gateway",
+                "routes"
+              ]
+            },
+            "description": "List all active routing rules dynamically mapped to Eureka microservices."
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. End-to-End Workflow (Run in Order)",
+      "item": [
+        {
+          "name": "Step 1: Register Merchant (Status: PENDING)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/merchant",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                "merchant"
+              ]
+            },
+            "description": "Merchant registers. Profile created in Merchant Service with status PENDING.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessName\": \"Pizza Planet\",\n  \"ownerName\": \"John Doe\",\n  \"email\": \"merchant@pizzaplanet.com\",\n  \"password\": \"password123\",\n  \"phone\": \"9876543210\",\n  \"category\": \"Food & Dining\",\n  \"address\": \"101 Food Avenue\",\n  \"description\": \"Best woodfired pizzas and Italian pastas\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.token) {",
+                  "        pm.collectionVariables.set('merchant_token', data.token);",
+                  "    }",
+                  "    if (data.userId) {",
+                  "        pm.collectionVariables.set('merchantId', data.userId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Step 2: Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Admin logs in to obtain admin JWT Bearer token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@dealsplatform.com\",\n  \"password\": \"admin123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    pm.collectionVariables.set('admin_token', data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Step 3: Admin Approves Merchant Application",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "{{adminEmail}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/merchants/{{merchantId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "merchants",
+                "{{merchantId}}",
+                "approve"
+              ]
+            },
+            "description": "Admin approves merchant account (Status -> APPROVED)."
+          }
+        },
+        {
+          "name": "Step 4: Merchant Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Approved merchant logs in.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"merchant@pizzaplanet.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    pm.collectionVariables.set('merchant_token', data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Step 5: View Available Subscription Plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions/plans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions",
+                "plans"
+              ]
+            },
+            "description": "Merchant browses subscription plans."
+          }
+        },
+        {
+          "name": "Step 6: Merchant Purchases Subscription (Standard Plan)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions"
+              ]
+            },
+            "description": "Merchant creates a subscription (Status: PENDING_VERIFICATION).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"merchantId\": 2,\n  \"planId\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.subscriptionId || data.id) {",
+                  "        pm.collectionVariables.set('subscriptionId', data.subscriptionId || data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Step 7: Merchant Makes Mock Payment (Auto-Verified & Publishes Event)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments"
+              ]
+            },
+            "description": "Merchant makes mock payment for subscription. Payment is automatically VERIFIED and publishes PaymentVerifiedEvent to RabbitMQ to activate subscription with zero Admin action.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"merchantId\": 2,\n  \"subscriptionId\": 1,\n  \"amount\": 999.0,\n  \"paymentMethod\": \"UPI\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.paymentId || data.id) {",
+                  "        pm.collectionVariables.set('paymentId', data.paymentId || data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Step 8: Verify Active Subscription Status for Merchant",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions/merchant/{{merchantId}}/active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions",
+                "merchant",
+                "{{merchantId}}",
+                "active"
+              ]
+            },
+            "description": "Confirm subscription is now ACTIVE with calculated dates (startDate=today, endDate=today+3months) received via RabbitMQ consumer."
+          }
+        },
+        {
+          "name": "Step 9: Merchant Creates Coupon Deal (PIZZA50)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{merchant_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons"
+              ]
+            },
+            "description": "Merchant creates coupon. Checks active subscription limit. Status: PENDING_APPROVAL.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"merchantId\": 2,\n  \"title\": \"50% Off Gourmet Pizzas\",\n  \"description\": \"Get 50% discount on all medium & large pizzas\",\n  \"category\": \"Food & Dining\",\n  \"discount\": 50.0,\n  \"cashbackPercentage\": 5.0,\n  \"couponCode\": \"PIZZA50\",\n  \"minimumPurchase\": 500.0,\n  \"validFrom\": \"2026-09-01\",\n  \"validUntil\": \"2026-10-31\",\n  \"usageLimit\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.couponId || data.id) {",
+                  "        pm.collectionVariables.set('couponId', data.couponId || data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Step 10: Admin Approves Coupon Deal",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "X-User-Email",
+                "value": "{{adminEmail}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/coupons/{{couponId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "coupons",
+                "{{couponId}}",
+                "approve"
+              ]
+            },
+            "description": "Admin approves coupon (Status -> ACTIVE)."
+          }
+        },
+        {
+          "name": "Step 11: Register Customer Account (Alice)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register/customer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                "customer"
+              ]
+            },
+            "description": "Register customer Alice. Extracts customer_token and customerId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Customer\",\n  \"email\": \"alice@gmail.com\",\n  \"password\": \"password123\",\n  \"phone\": \"9123456780\",\n  \"preferences\": \"Food & Dining, Fashion\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.token) {",
+                  "        pm.collectionVariables.set('customer_token', data.token);",
+                  "    }",
+                  "    if (data.userId) {",
+                  "        pm.collectionVariables.set('customerId', data.userId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Step 12: Customer Discovers Active Coupons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "coupons"
+              ]
+            },
+            "description": "Customer searches active deals."
+          }
+        },
+        {
+          "name": "Step 13: Customer Redeems Coupon (Purchase -> Discount Applied + 10 Points Awarded)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/redemptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "redemptions"
+              ]
+            },
+            "description": "Customer applies PIZZA50. Calculates discount, checks one-time usage, and triggers +10 points to customer point account (ZERO direct money to wallet).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponId\": 1,\n  \"customerId\": 3,\n  \"purchaseAmount\": 1000.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    var data = pm.response.json();",
+                  "    if (data.redemptionId || data.id) {",
+                  "        pm.collectionVariables.set('redemptionId', data.redemptionId || data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Step 14: Check Customer Points Balance (Points = 10)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/points/customer/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "points",
+                "customer",
+                "{{customerId}}"
+              ]
+            },
+            "description": "Verify customer point account has exactly 10 points after first redemption."
+          }
+        },
+        {
+          "name": "Step 15: Customer Attempts Duplicate Coupon Redemption (Expect 400 Bad Request)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/redemptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "redemptions"
+              ]
+            },
+            "description": "Same customer attempts to redeem same coupon again. Rejection: Customer has already used this coupon.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponId\": 1,\n  \"customerId\": 3,\n  \"purchaseAmount\": 1000.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Step 16: Customer Converts 100 Points to Wallet Money (100 pts -> ₹10)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/points/redeem",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "points",
+                "redeem"
+              ]
+            },
+            "description": "Customer converts 100 points to ₹10 wallet money. Points deducted: 100, Wallet credited: ₹10.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": 3,\n  \"points\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Step 17: Check Customer Wallet Balance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cashback/wallet/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cashback",
+                "wallet",
+                "{{customerId}}"
+              ]
+            },
+            "description": "Verify wallet money balance."
+          }
+        },
+        {
+          "name": "Step 18: Customer Withdraws Wallet Money",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cashback/redeem",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cashback",
+                "redeem"
+              ]
+            },
+            "description": "Customer withdraws ₹10 money from wallet.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": 3,\n  \"amount\": 10.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Step 19: Admin Views Platform Revenue Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/revenue",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "revenue"
+              ]
+            },
+            "description": "Admin checks platform financial summary: verified subscription revenue (₹999.00)."
+          }
+        },
+        {
+          "name": "Step 20: Admin Checks Dispatched Notification Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
+            },
+            "description": "Audit all dispatched SMS/Email notification logs triggered during the saga workflow."
+          }
+        }
+      ]
+    }
+  ]
+}

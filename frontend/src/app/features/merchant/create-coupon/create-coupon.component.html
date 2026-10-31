@@ -1,0 +1,341 @@
+<div class="create-coupon-container">
+  <div class="page-header">
+    <a routerLink="/merchant/coupons" class="back-link">
+      ← Back to Coupons
+    </a>
+    <h1 class="page-title">Create New Deal or Coupon</h1>
+    <p class="page-subtitle">Publish a promotional coupon for customers to discover and redeem</p>
+  </div>
+
+  @if (loadingSubscription) {
+    <app-loading-skeleton type="card"></app-loading-skeleton>
+  } @else if (merchantStatus !== 'APPROVED') {
+    <!-- Blocked: Merchant not approved (RULE 1) -->
+    <div class="alert-box alert-warning">
+      <div class="alert-icon">⚠️</div>
+      <div>
+        <h4 class="alert-title">Merchant Verification Pending</h4>
+        <p class="alert-desc">
+          Your merchant account is currently <strong>{{ merchantStatus }}</strong>.
+          Only approved merchants can create and publish coupons. Please wait for an administrator to review your store.
+        </p>
+      </div>
+    </div>
+  } @else if (!activeSubscription || activeSubscription.status !== 'ACTIVE') {
+    <!-- Blocked: No active subscription (RULE 2 & 3) -->
+    <div class="alert-box alert-danger">
+      <div class="alert-icon">💎</div>
+      <div>
+        <h4 class="alert-title">Active Subscription Required</h4>
+        <p class="alert-desc">
+          According to platform policy (Rule 2 & 3), merchants must have an <strong>ACTIVE</strong> subscription to publish deals.
+        </p>
+        <a routerLink="/merchant/subscription" class="btn btn-primary btn-sm" style="margin-top: 0.75rem;">
+          Choose a Subscription Plan
+        </a>
+      </div>
+    </div>
+  } @else if (isLimitReached) {
+    <!-- Blocked: Coupon limit reached (RULE 16) -->
+    <div class="alert-box alert-warning">
+      <div class="alert-icon">📊</div>
+      <div>
+        <h4 class="alert-title">Plan Coupon Limit Reached</h4>
+        <p class="alert-desc">
+          You have created {{ currentCouponsCount }} / {{ activeSubscription.couponLimit || 10 }} coupons allowed by your current plan.
+          Please upgrade your subscription to create more deals.
+        </p>
+        <a routerLink="/merchant/subscription" class="btn btn-primary btn-sm" style="margin-top: 0.75rem;">
+          Upgrade Subscription
+        </a>
+      </div>
+    </div>
+  } @else {
+    <!-- Allowed: Show Create Coupon Form -->
+    <div class="form-layout card">
+      <!-- Active Subscription & Quota Usage Banner -->
+      <div class="sub-quota-banner">
+        <div class="quota-banner-left">
+          <span class="info-icon">🎟️</span>
+          <div>
+            <strong>Active Subscription: {{ activeSubscription.planName }} Tier</strong>
+            <div class="quota-subtext">Active Period: {{ activeSubscription.startDate | date:'dd MMM yyyy' }} – {{ activeSubscription.endDate | date:'dd MMM yyyy' }}</div>
+          </div>
+        </div>
+        <div class="quota-banner-right">
+          <div class="quota-pill">
+            Coupon Usage: <strong>{{ currentCouponsCount }} / {{ activeSubscription.couponLimit }}</strong> coupons generated
+            <span class="remaining-highlight">({{ remainingCouponsCount }} remaining)</span>
+          </div>
+        </div>
+      </div>
+
+      <form [formGroup]="couponForm" (ngSubmit)="onSubmit()">
+        <!-- General Info Section -->
+        <div class="form-section">
+          <h3 class="section-title">1. Basic Deal Information</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="couponCode">Coupon Code *</label>
+              <input
+                id="couponCode"
+                type="text"
+                class="form-control code-input"
+                formControlName="couponCode"
+                placeholder="e.g. FLASH50, SAVE20"
+                (input)="onCodeInput($event)"
+              />
+              <small class="form-hint">Uppercase alphanumeric without spaces (e.g. SUMMER25)</small>
+              @if (f['couponCode'].touched && f['couponCode'].errors) {
+                <div class="form-error">Coupon code is required (min 3 chars).</div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="category">Category *</label>
+              <select id="category" class="form-control" formControlName="category">
+                <option value="" disabled>Select category...</option>
+                @for (cat of categories; track cat) {
+                  <option [value]="cat">{{ cat }}</option>
+                }
+              </select>
+              @if (f['category'].touched && f['category'].errors) {
+                <div class="form-error">Please select a category.</div>
+              }
+            </div>
+
+            <div class="form-group full-width">
+              <label class="form-label" for="title">Deal Title / Headline *</label>
+              <input
+                id="title"
+                type="text"
+                class="form-control"
+                formControlName="title"
+                placeholder="e.g. 50% Flat Off on All Gourmet Pizzas & Pastas"
+              />
+              @if (f['title'].touched && f['title'].errors) {
+                <div class="form-error">Deal title is required (min 5 chars).</div>
+              }
+            </div>
+
+            <div class="form-group full-width">
+              <label class="form-label" for="description">Detailed Description *</label>
+              <textarea
+                id="description"
+                rows="3"
+                class="form-control"
+                formControlName="description"
+                placeholder="Explain the offer, special terms, inclusions, or item restrictions..."
+              ></textarea>
+              @if (f['description'].touched && f['description'].errors) {
+                <div class="form-error">Description is required.</div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Discount & Limits Section -->
+        <div class="form-section">
+          <h3 class="section-title">2. Discount & Redemption Limits</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="discount">Discount Percentage (%) *</label>
+              <div class="input-with-symbol">
+                <input
+                  id="discount"
+                  type="number"
+                  class="form-control"
+                  formControlName="discount"
+                  min="1"
+                  max="100"
+                  placeholder="e.g. 25"
+                />
+                <span class="symbol">%</span>
+              </div>
+              <small class="form-hint">Enter discount between 1% and 100%</small>
+              @if (f['discount'].touched && f['discount'].errors) {
+                <div class="form-error">Valid discount percentage is required (1-100).</div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="cashbackPercentage">Cashback Percentage (%)</label>
+              <div class="input-with-symbol">
+                <input
+                  id="cashbackPercentage"
+                  type="number"
+                  class="form-control"
+                  formControlName="cashbackPercentage"
+                  min="0"
+                  max="50"
+                  placeholder="e.g. 5"
+                />
+                <span class="symbol">%</span>
+              </div>
+              <small class="form-hint">Extra wallet cashback reward (optional)</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="minimumPurchase">Minimum Order Spend (₹) *</label>
+              <div class="input-with-symbol">
+                <span class="symbol-left">₹</span>
+                <input
+                  id="minimumPurchase"
+                  type="number"
+                  class="form-control pad-left"
+                  formControlName="minimumPurchase"
+                  min="0"
+                  placeholder="0"
+                />
+              </div>
+              <small class="form-hint">Minimum cart total to apply this coupon</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="usageLimit">Total Redemption Quota *</label>
+              <input
+                id="usageLimit"
+                type="number"
+                class="form-control"
+                formControlName="usageLimit"
+                min="1"
+                placeholder="e.g. 100"
+              />
+              <small class="form-hint">Maximum number of times this coupon can be redeemed</small>
+              @if (f['usageLimit'].touched && f['usageLimit'].errors) {
+                <div class="form-error">Redemption limit must be at least 1.</div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Date & Time Validity Range Section (FEATURE 1: Rule 4 Enforced) -->
+        <div class="form-section">
+          <h3 class="section-title">3. Validity Period (Start & End Date/Time)</h3>
+          <p class="section-subtitle">Specify the active validity window. Supports full time with seconds (e.g. 00:00:00 to 23:59:59).</p>
+
+          <div class="form-grid validity-grid">
+            <!-- Start Date -->
+            <div class="form-group">
+              <label class="form-label" for="startDate">Start Date *</label>
+              <input
+                id="startDate"
+                type="date"
+                class="form-control"
+                formControlName="startDate"
+                [min]="subStartMin"
+                [max]="subEndMax"
+              />
+              <small class="form-hint">Date when coupon becomes effective</small>
+              @if (f['startDate'].touched && f['startDate'].errors) {
+                <div class="form-error">Start date is required.</div>
+              }
+            </div>
+
+            <!-- Start Time -->
+            <div class="form-group">
+              <label class="form-label" for="startTime">Start Time (HH:mm:ss) *</label>
+              <input
+                id="startTime"
+                type="time"
+                step="1"
+                class="form-control time-input"
+                formControlName="startTime"
+              />
+              <small class="form-hint">Default: 00:00:00 (seconds supported)</small>
+              @if (f['startTime'].touched && f['startTime'].errors) {
+                <div class="form-error">Start time is required.</div>
+              }
+            </div>
+
+            <!-- End Date -->
+            <div class="form-group">
+              <label class="form-label" for="endDate">End Date *</label>
+              <input
+                id="endDate"
+                type="date"
+                class="form-control"
+                formControlName="endDate"
+                [min]="f['startDate'].value || subStartMin"
+                [max]="subEndMax"
+              />
+              <small class="form-hint">
+                @if (subEndMax) {
+                  Max: <strong>{{ subEndMax }}</strong> (subscription end date)
+                } @else {
+                  Date when coupon expires
+                }
+              </small>
+              @if (f['endDate'].touched && f['endDate'].errors) {
+                <div class="form-error">End date is required.</div>
+              }
+            </div>
+
+            <!-- End Time -->
+            <div class="form-group">
+              <label class="form-label" for="endTime">End Time (HH:mm:ss) *</label>
+              <input
+                id="endTime"
+                type="time"
+                step="1"
+                class="form-control time-input"
+                formControlName="endTime"
+              />
+              <small class="form-hint">Default: 23:59:59 (seconds supported)</small>
+              @if (f['endTime'].touched && f['endTime'].errors) {
+                <div class="form-error">End time is required.</div>
+              }
+            </div>
+          </div>
+
+          @if (validityPeriodError && (f['startDate'].touched || f['endDate'].touched || f['startTime'].touched || f['endTime'].touched)) {
+            <div class="validity-error-box fade-in">
+              <span class="error-icon">⚠️</span>
+              <span class="error-text">{{ validityPeriodError }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Live Coupon Preview Card -->
+        <div class="form-section">
+          <h3 class="section-title">4. Live Customer Preview</h3>
+          <div class="preview-box">
+            <div class="preview-card">
+              <div class="preview-header">
+                <span class="preview-discount">{{ f['discount'].value || 20 }}% OFF</span>
+                <span class="preview-cat">{{ f['category'].value || 'Category' }}</span>
+              </div>
+              <h4 class="preview-title">{{ f['title'].value || 'Headline for your deal...' }}</h4>
+              <p class="preview-desc">{{ f['description'].value || 'Deal description will show here for users...' }}</p>
+              <div class="preview-code-tag">
+                <code>{{ f['couponCode'].value || 'CODE' }}</code>
+              </div>
+              <div class="preview-meta text-muted">
+                <span>Min spend: ₹{{ f['minimumPurchase'].value || 0 }}</span>
+                <span>Valid: {{ f['startDate'].value || 'Start' }} {{ f['startTime'].value || '00:00:00' }} to {{ f['endDate'].value || 'End' }} {{ f['endTime'].value || '23:59:59' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-actions">
+          <a routerLink="/merchant/coupons" class="btn btn-secondary">
+            Cancel
+          </a>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="couponForm.invalid || submitting"
+          >
+            @if (submitting) {
+              <span>Publishing...</span>
+            } @else {
+              <span>Publish Coupon (Submit for Approval)</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</div>

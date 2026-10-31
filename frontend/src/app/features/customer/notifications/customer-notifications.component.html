@@ -1,0 +1,58 @@
+<div class="notifications-page fade-in">
+  <div class="page-header header-with-action">
+    <div>
+      <h1 class="page-title">Alerts & Notifications</h1>
+      <p class="page-subtitle">
+        Real-time alerts and notifications received for your account.
+      </p>
+    </div>
+    @if (notificationService.unreadCount() > 0) {
+      <button type="button" class="btn btn-outline btn-sm btn-mark-read" (click)="markAllAsRead()">
+        ✓ Mark All as Read ({{ notificationService.unreadCount() }})
+      </button>
+    }
+  </div>
+
+  @if (isLoading) {
+    <app-loading-skeleton type="card"></app-loading-skeleton>
+  } @else if (notifications.length === 0) {
+    <app-empty-state
+      title="No Alerts Received"
+      description="You don't have any notifications yet. Alerts will appear here when you redeem deals, earn cashback, or gain loyalty points."
+      icon="🔔"
+    ></app-empty-state>
+  } @else {
+    <div class="notifications-feed">
+      @for (notif of pagedNotifications; track notif.id) {
+        <div
+          class="notification-card card fade-in"
+          [class.unread]="isUnread(notif)"
+          (click)="markSingleAsRead(notif)"
+        >
+          <div class="notif-header">
+            <div class="notif-type-group">
+              <span class="channel-badge badge badge-in_app">
+                🔔 IN-APP
+              </span>
+              @if (isUnread(notif)) {
+                <span class="new-dot-badge">● NEW</span>
+              }
+            </div>
+            <span class="notif-time">{{ formatDate(notif.sentAt) }}</span>
+          </div>
+
+          <h4 class="notif-subject">{{ notif.subject }}</h4>
+          <p class="notif-message">{{ notif.message }}</p>
+        </div>
+      }
+    </div>
+    <app-pagination
+      [totalItems]="notifications.length"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage"
+      [pageSizeOptions]="[5, 10, 20]"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
+  }
+</div>

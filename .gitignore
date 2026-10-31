@@ -1,0 +1,42 @@
+# Node.js dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+
+# Angular specific
+.angular/
+
+# Maven / Java build
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Logs
+*.log
+logs/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.sublime-workspace
+*.sublime-project
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Environment files (do NOT commit)
+.env
+.env.*
+
+# Misc
+*.tmp
+*.bak
+

@@ -1,0 +1,177 @@
+<div class="profile-page fade-in">
+  <div class="page-header">
+    <h1 class="page-title">Customer Profile & Account Details</h1>
+    <p class="page-subtitle">
+      Manage your personal contact details, view your loyalty tier, wallet balances, and shopping preferences.
+    </p>
+  </div>
+
+  <!-- TOP SUMMARY & FINANCIAL OVERVIEW CARDS -->
+  <div class="metrics-grid">
+    <!-- Loyalty Tier Card -->
+    <div class="card metric-card tier-card">
+      <div class="metric-icon">⭐</div>
+      <div class="metric-body">
+        <span class="metric-label">Loyalty Tier</span>
+        <h3 class="metric-value">{{ tierDisplayName }}</h3>
+        <span class="metric-hint">
+          {{ tierMultiplier }} Cashback Multiplier
+        </span>
+      </div>
+      <a routerLink="/customer/points" class="metric-link">Tier Benefits →</a>
+    </div>
+
+    <!-- Points Balance Card -->
+    <div class="card metric-card">
+      <div class="metric-icon">🪙</div>
+      <div class="metric-body">
+        <span class="metric-label">Reward Points</span>
+        <h3 class="metric-value">{{ pointAccount?.points || 0 }} pts</h3>
+        <span class="metric-hint">
+          Lifetime: {{ pointAccount?.totalPoints || 0 }} pts
+        </span>
+      </div>
+      <a routerLink="/customer/points" class="metric-link">Points History →</a>
+    </div>
+
+    <!-- Cashback Balance Card -->
+    <div class="card metric-card">
+      <div class="metric-icon">💰</div>
+      <div class="metric-body">
+        <span class="metric-label">Cashback Wallet</span>
+        <h3 class="metric-value">₹{{ (wallet?.balance || 0) | number:'1.2-2' }}</h3>
+        <span class="metric-hint">Available for Withdrawal</span>
+      </div>
+      <a routerLink="/customer/wallet" class="metric-link">Wallet & Withdraw →</a>
+    </div>
+
+    <!-- Redemptions Card -->
+    <div class="card metric-card">
+      <div class="metric-icon">🎟️</div>
+      <div class="metric-body">
+        <span class="metric-label">Deals Claimed</span>
+        <h3 class="metric-value">{{ totalRedemptionsCount }}</h3>
+        <span class="metric-hint">Verified Redemptions</span>
+      </div>
+      <a routerLink="/customer/redemptions" class="metric-link">My Redemptions →</a>
+    </div>
+  </div>
+
+  <div class="profile-layout-grid">
+    <!-- LEFT: Personal Details & Preferences Form -->
+    <div class="card form-card">
+      <div class="section-title-box">
+        <h3 class="section-title">Edit Personal Details</h3>
+        <p class="section-desc">Keep your contact information updated to receive deal alerts and verification codes.</p>
+      </div>
+
+      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="name">Full Name *</label>
+            <input
+              id="name"
+              type="text"
+              class="form-control"
+              [class.is-invalid]="f['name'].touched && f['name'].invalid"
+              formControlName="name"
+              placeholder="Your full name"
+            />
+            @if (f['name'].touched && f['name'].invalid) {
+              <span class="form-text-error">Name is required.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="phone">Phone Number *</label>
+            <input
+              id="phone"
+              type="tel"
+              class="form-control"
+              [class.is-invalid]="f['phone'].touched && f['phone'].invalid"
+              formControlName="phone"
+              placeholder="10-digit mobile number"
+            />
+            @if (f['phone'].touched && f['phone'].invalid) {
+              <span class="form-text-error">Phone number is required.</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="preferences">Shopping & Deal Preferences</label>
+          <input
+            id="preferences"
+            type="text"
+            class="form-control"
+            formControlName="preferences"
+            placeholder="e.g. Food & Dining, Electronics, Fashion, Beauty"
+          />
+          <span class="hint-text">We prioritize personalized coupon recommendations and deal alerts based on these categories.</span>
+        </div>
+
+        <div class="form-footer-actions">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="profileForm.invalid || isSaving"
+          >
+            {{ isSaving ? 'Saving Changes...' : 'Save Profile Changes' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- RIGHT: Account & Security Metadata Card -->
+    <div class="card meta-card">
+      <div class="account-overview-box">
+        <div class="avatar-large">👤</div>
+        <div class="overview-meta">
+          <h3 class="overview-name">{{ customer?.name || authService.currentUser()?.name }}</h3>
+          <span class="overview-email">{{ customer?.email || authService.currentUser()?.email }}</span>
+          <div class="overview-badges">
+            <span class="badge badge-success">ACTIVE ACCOUNT</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="meta-details-list">
+        <div class="meta-item">
+          <span class="meta-label">Customer ID:</span>
+          <span class="meta-val font-mono">#{{ customer?.id || authService.currentUserId() }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Email Status:</span>
+          <span class="meta-val text-success">✓ Verified</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Member Since:</span>
+          <span class="meta-val">{{ formatDate(customer?.createdAt) }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">SMS Alert Status:</span>
+          <span class="meta-val text-success">✓ Enabled</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Loyalty Status:</span>
+          <span class="meta-val font-bold text-accent">{{ tierDisplayName }} Member</span>
+        </div>
+      </div>
+
+      <div class="quick-nav-box">
+        <h4 class="quick-nav-title">Quick Actions</h4>
+        <div class="quick-nav-links">
+          <a routerLink="/customer/notifications" class="btn btn-outline btn-sm">
+            🔔 View Notifications
+          </a>
+          <a routerLink="/customer/following" class="btn btn-outline btn-sm">
+            🏪 Followed Stores
+          </a>
+          <a routerLink="/deals" class="btn btn-outline btn-sm">
+            🔍 Explore Deals
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
